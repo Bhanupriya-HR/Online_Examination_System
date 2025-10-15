@@ -1,32 +1,5 @@
-//package com.exam.ui;
-//import com.exam.db.DBConnection;
-//import java.sql.*;
-//import java.util.Scanner;
-//public class LoginUI {
-//    public static boolean loginUser() {
-//        Scanner sc = new Scanner(System.in);
-//        System.out.print("Enter username: ");
-//        String username = sc.nextLine();
-//        System.out.print("Enter password: ");
-//        String password = sc.nextLine();
-//        try (Connection con = DBConnection.getConnection()) {
-//            PreparedStatement ps = con.prepareStatement("SELECT * FROM users WHERE username=? AND password=?");
-//            ps.setString(1, username);
-//            ps.setString(2, password);
-//            ResultSet rs = ps.executeQuery();
-//            if (rs.next()) {
-//                System.out.println("Login successful!");
-//                return true;
-//            } else {
-//                System.out.println("Invalid credentials.");
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        return false;
-//    }
-//}
 package com.exam.ui;
+
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
@@ -38,50 +11,92 @@ public class LoginUI extends JFrame {
     private JButton loginButton;
 
     public LoginUI() {
+        // ==== Window setup ====
         setTitle("Login");
-        setSize(300, 200);
+        setSize(800, 500);               // consistent with RegisterUI
+        setLocationRelativeTo(null);     // center of screen
+        setResizable(false);             // prevent resizing/maximizing
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(3,2));
 
-        add(new JLabel("Username:"));
-        usernameField = new JTextField();
-        add(usernameField);
+        // ==== Layout setup ====
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        add(new JLabel("Password:"));
-        passwordField = new JPasswordField();
-        add(passwordField);
+        // ==== Title ====
+        JLabel titleLabel = new JLabel("Login to Online Exam", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
 
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        panel.add(titleLabel, gbc);
+        gbc.gridwidth = 1;
+
+        // Username
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(new JLabel("Username:"), gbc);
+        gbc.gridx = 1;
+        usernameField = new JTextField(20);
+        panel.add(usernameField, gbc);
+
+        // Password
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(new JLabel("Password:"), gbc);
+        gbc.gridx = 1;
+        passwordField = new JPasswordField(20);
+        panel.add(passwordField, gbc);
+
+        // Login Button
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
         loginButton = new JButton("Login");
-        add(loginButton);
+        panel.add(loginButton, gbc);
 
+        // ==== Add listener ====
         loginButton.addActionListener(e -> loginUser());
 
+        // ==== Final setup ====
+        add(panel);
         setVisible(true);
     }
 
     private void loginUser() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        // Empty field validation
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both username and password.");
+            return;
+        }
 
         try (Connection con = DBConnection.getConnection()) {
-            PreparedStatement ps = con.prepareStatement("SELECT * FROM users WHERE username=? AND password=?");
+            PreparedStatement ps = con.prepareStatement(
+                    "SELECT * FROM users WHERE username=? AND password=?"
+            );
             ps.setString(1, username);
             ps.setString(2, password);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 JOptionPane.showMessageDialog(this, "Login successful!");
-                dispose();
-                new ExamUI(username);
+                dispose(); // close current window
+                new ExamUI(username); // open exam window with username
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid credentials.");
+                JOptionPane.showMessageDialog(this, "Invalid credentials. Please try again.");
             }
+
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
     }
 
     public static void main(String[] args) {
-        new LoginUI();
+        SwingUtilities.invokeLater(LoginUI::new);
     }
 }

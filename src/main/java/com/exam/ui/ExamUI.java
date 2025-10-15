@@ -126,6 +126,7 @@
 //}
 
 package com.exam.ui;
+
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
@@ -145,28 +146,50 @@ public class ExamUI extends JFrame {
 
     public ExamUI(String username) {
         this.username = username;
-        setTitle("Exam - " + username);
-        setSize(400, 300);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(6,1));
 
-        questionLabel = new JLabel();
-        add(questionLabel);
+        // ==== Window setup ====
+        setTitle("Exam - " + username);
+        setSize(800, 500);            // consistent with other UIs
+        setLocationRelativeTo(null);  // center on screen
+        setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // ==== Layout ====
+        JPanel mainPanel = new JPanel(new BorderLayout(10,10));
+        JPanel optionsPanel = new JPanel(new GridLayout(4,1,5,5));
+        JPanel bottomPanel = new JPanel();
+
+        questionLabel = new JLabel("Question will appear here", SwingConstants.CENTER);
+        questionLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
 
         optionA = new JRadioButton();
         optionB = new JRadioButton();
         optionC = new JRadioButton();
         optionD = new JRadioButton();
+
         group = new ButtonGroup();
         group.add(optionA); group.add(optionB); group.add(optionC); group.add(optionD);
-        add(optionA); add(optionB); add(optionC); add(optionD);
+
+        optionsPanel.add(optionA);
+        optionsPanel.add(optionB);
+        optionsPanel.add(optionC);
+        optionsPanel.add(optionD);
 
         nextButton = new JButton("Next");
-        add(nextButton);
+        bottomPanel.add(nextButton);
+
+        mainPanel.add(questionLabel, BorderLayout.NORTH);
+        mainPanel.add(optionsPanel, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        add(mainPanel);
+
+        // ==== Listeners ====
         nextButton.addActionListener(e -> nextQuestion());
 
         loadQuestions();
         displayQuestion();
+
         setVisible(true);
     }
 
@@ -213,6 +236,7 @@ public class ExamUI extends JFrame {
 
             if(selected != null && selected.equalsIgnoreCase(q.getCorrectAnswer())) score++;
             currentIndex++;
+
             if(currentIndex < questions.size()) displayQuestion();
             else showResult();
         }
@@ -220,9 +244,9 @@ public class ExamUI extends JFrame {
 
     private void showResult() {
         JOptionPane.showMessageDialog(this, "Exam completed! Score: " + score + "/" + questions.size());
-        saveScore(); // Save the result to database
+        saveScore(); // Save to database
         dispose();
-        new LoginUI();
+        new LoginUI(); // go back to login
     }
 
     private void saveScore() {
@@ -236,6 +260,10 @@ public class ExamUI extends JFrame {
             ps.executeUpdate();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error saving score: " + e.getMessage());
-               }
-}
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ExamUI("TestUser"));
+    }
 }
